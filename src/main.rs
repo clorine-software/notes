@@ -225,7 +225,7 @@ async fn get_data() -> Result<Root> {
     let mut data_dir = home_dir().ok_or_else(|| anyhow::anyhow!("Home directory not found"))?;
     data_dir.push(".clorine/notes");
     if !data_dir.exists() { fs::create_dir_all(&data_dir).await?; }
-    let data_file = data_dir.join("data.json");
+    let data_file = data_dir.join("data.ron");
     if data_file.exists() {
         Ok(ron::from_str(&fs::read_to_string(data_file).await?)?)
     } else {
@@ -237,7 +237,7 @@ async fn save_data(data: Root) -> Result<()> {
     let mut data_dir = home_dir().ok_or_else(|| anyhow::anyhow!("Home directory not found"))?;
     data_dir.push(".clorine/notes");
     if !data_dir.exists() { fs::create_dir_all(&data_dir).await?; }
-    let data_file = data_dir.join("data.json");
+    let data_file = data_dir.join("data.ron");
     fs::write(data_file, ron::ser::to_string_pretty(&data,
             ron::ser::PrettyConfig::new().depth_limit(4).indentor("  ".to_string())
             )?).await?;
