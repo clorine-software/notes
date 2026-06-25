@@ -2,8 +2,8 @@ use std::str::FromStr;
 
 use clap::{Parser, Subcommand};
 use anyhow::Result;
-use colored::Colorize;
-use dialoguer::Confirm;
+// use colored::Colorize;
+// use dialoguer::Confirm;
 
 use crate::data::*;
 use crate::lua::*;
@@ -71,6 +71,10 @@ enum Commands {
         #[arg(short, long)]
         group_parent: Option<GroupId>,
     },
+    // Cat {}
+    // Delete {}
+    // Move {}
+    // Edit {}
     PrintJson,
 }
 
@@ -80,38 +84,11 @@ pub async fn parse() -> Result<()> {
 
     match cli.command {
         Commands::List { groups_only } => {
-            let data = get_data().await?;
-
-            match groups_only {
-                true => {
-                    for group_id in &data.group_order {
-                        let mut is_root_child = true;
-                        for group_sub_id in &data.group_order {
-                            if data.groups[&group_sub_id].contents_groups.contains(group_id) {
-                                is_root_child = false;
-                            }
-                        }
-                        if is_root_child == true {
-                            recursive_list_print(0, true, &data, group_id);
-                        }
-                    }
-                },
-                false => {
-                    for group_id in &data.group_order {
-                        let mut is_root_child = true;
-                        for group_sub_id in &data.group_order {
-                            if data.groups[&group_sub_id].contents_groups.contains(group_id) {
-                                is_root_child = false;
-                            }
-                        }
-                        if is_root_child == true {
-                            recursive_list_print(0, false, &data, group_id);
-                        }
-                    }
-                }
-            }
+            list(groups_only, false).await?;
         },
-        Commands::Display { groups_only } => {},
+        Commands::Display { groups_only } => {
+            list(groups_only, true).await?;
+        },
         Commands::Create { name, group_parent } => {
             let mut data = get_data().await?;
             
@@ -258,14 +235,95 @@ pub async fn parse() -> Result<()> {
 
 fn recursive_list_print(iter: usize, only_groups: bool, data: &Root, group_key: &GroupId) {
     println!(" {}{} {} - group", "  ".repeat(iter), group_key, data.groups[&group_key].name);
+
+    for sub_id in &data.groups[&group_key].contents_groups {
+        recursive_list_print(iter+1, only_groups, data, sub_id);
+    }
+
     if !only_groups {
         for task_key in &data.groups[&group_key].contents_tasks {
             println!("   {}{} {} - task", "  ".repeat(iter), task_key, data.tasks[&task_key].name);
         }
     }
+}
+
+fn recursive_list_display(iter: usize, only_groups: bool, data: &Root, group_key: &GroupId, display_group_func: &mlua::Function, display_task_func: &mlua::Function) {
+    {let text_to_display: String = display_group_func.call(
+        (
+            iter,
+            group_key.clone().as_str(),
+            data.groups[&group_key].name.clone(),
+            data.groups[&group_key].description.clone(),
+            data.groups[&group_key].contents_tasks.is_empty() && data.groups[&group_key].contents_groups.is_empty(), 
+        )
+    ).unwrap();
+    println!("{}", text_to_display);}
 
     for sub_id in &data.groups[&group_key].contents_groups {
-        recursive_list_print(iter+1, only_groups, data, sub_id);
+        recursive_list_display(iter+1, only_groups, data, sub_id, display_group_func, display_task_func);
     }
+
+    if !only_groups {
+        for task_key in &data.groups[&group_key].contents_tasks {
+            let text_to_display: String = display_task_func.call(
+                (
+                    iter,
+                    task_key.clone().as_str(),
+                    group_key.clone().as_str(),
+                    data.tasks[&task_key].name.clone(),
+                    data.tasks[&task_key].content.text.clone(),
+                    data.tasks[&task_key].content.files.clone(),
+                )
+            ).unwrap();
+            println!("{}", text_to_display);
+        }
+    }
+}
+
+async fn list(groups_only: bool, display: bool) -> Result<()> {
+    let data = get_data().await?;
+
+    match groups_only {
+        true => {
+            for group_id in &data.group_order {
+                let mut is_root_child = true;
+                for group_sub_id in &data.group_order {
+                    if data.groups[&group_sub_id].contents_groups.contains(group_id) {
+                        is_root_child = false;
+                    }
+                }
+                if is_root_child == true {
+                    match display {
+                        true => {
+                            let (_lua, display_group_func, display_task_func) = get_display_func().await.map_err(|e| anyhow::anyhow!("{}", e))?;
+                            recursive_list_display(0, true, &data, group_id, &display_group_func, &display_task_func)
+                        },
+                        false => {recursive_list_print(0, true, &data, group_id)},
+                    }
+                }
+            }
+        },
+        false => {
+            for group_id in &data.group_order {
+                let mut is_root_child = true;
+                for group_sub_id in &data.group_order {
+                    if data.groups[&group_sub_id].contents_groups.contains(group_id) {
+                        is_root_child = false;
+                    }
+                }
+                if is_root_child == true {
+                    match display {
+                        true => {
+                            let (_lua, display_group_func, display_task_func) = get_display_func().await.map_err(|e| anyhow::anyhow!("{}", e))?;
+                            recursive_list_display(0, false, &data, group_id, &display_group_func, &display_task_func)
+                        },
+                        false => {recursive_list_print(0, false, &data, group_id)},
+                    }
+                }
+            }
+        }
+    }
+
+    Ok(())
 }
 
