@@ -1,6 +1,4 @@
-<h1 align="center">CL.NET notes</h1>
-
-Программа является частью пакета программ CL.NET
+<h1 align="center">Clorine Notes</h1>
 
 ---
 ## About
