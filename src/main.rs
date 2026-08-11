@@ -1,7 +1,8 @@
+use std::path::PathBuf;
+
 use serde::{Deserialize, Serialize};
 use colored::Colorize;
 use clap::{Parser, Subcommand};
-use home::home_dir;
 use anyhow::Result;
 use tokio::fs;
 use dialoguer::Confirm;
@@ -222,8 +223,7 @@ async fn main() -> Result<()> {
 }
 
 async fn get_data() -> Result<Root> {
-    let mut data_dir = home_dir().ok_or_else(|| anyhow::anyhow!("Home directory not found"))?;
-    data_dir.push(".clorine/notes");
+    let data_dir = PathBuf::from(get_xdg_data_home().await?);
     if !data_dir.exists() { fs::create_dir_all(&data_dir).await?; }
     let data_file = data_dir.join("data.json");
     if data_file.exists() {
@@ -234,8 +234,7 @@ async fn get_data() -> Result<Root> {
 }
 
 async fn save_data(data: Root) -> Result<()> {
-    let mut data_dir = home_dir().ok_or_else(|| anyhow::anyhow!("Home directory not found"))?;
-    data_dir.push(".clorine/notes");
+    let data_dir = PathBuf::from(get_xdg_data_home().await?);
     if !data_dir.exists() { fs::create_dir_all(&data_dir).await?; }
     let data_file = data_dir.join("data.json");
     fs::write(data_file, ron::ser::to_string_pretty(&data,
@@ -245,13 +244,20 @@ async fn save_data(data: Root) -> Result<()> {
 }
 
 async fn get_config() -> Result<Config> {
-    let mut data_dir = home_dir().ok_or_else(|| anyhow::anyhow!("Home directory not found"))?;
-    data_dir.push(".clorine/notes");
-    if !data_dir.exists() { fs::create_dir_all(&data_dir).await?; }
-    let data_file = data_dir.join("config.toml");
-    if data_file.exists() {
-        Ok(toml::from_str(&fs::read_to_string(data_file).await?)?)
+    let conf_dir = PathBuf::from(get_xdg_config_home().await?);
+    if !conf_dir.exists() { fs::create_dir_all(&conf_dir).await?; }
+    let conf_file = conf_dir.join("config.toml");
+    if conf_file.exists() {
+        Ok(toml::from_str(&fs::read_to_string(conf_file).await?)?)
     } else {
         Ok(Config{style: None})
     }
+}
+
+async fn get_xdg_data_home() -> Result<String> {
+    Ok(std::env::var("XDG_DATA_HOME")?)
+}
+
+async fn get_xdg_config_home() -> Result<String> {
+    Ok(std::env::var("XDG_CONFIG_HOME")?)
 }
