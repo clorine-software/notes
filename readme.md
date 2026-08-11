@@ -1,6 +1,5 @@
 <h1 align="center">Clorine Notes</h1>
 
----
 ## About
 
 - notes - простая cli программа для ведения записок и задач, написанная на rust
