@@ -45,7 +45,7 @@ pub enum Commands {
         #[arg(short, long)]
         force: bool,
     },
-    /// You can use this to create your own interface for CL.NET Notes
+    /// You can use this to create your own interface for Clorine Notes
     PrintJson,
 }
 
