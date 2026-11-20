@@ -31,7 +31,7 @@ notes print-json # Вывод БД в JSON, с помощью этой кома�
 ### Linux
 
 ```sh
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/clorine-software/notes/releases/download/v1.2.4/notes-installer.sh | sh
+curl --proto '=https' --tlsv1.2 -LsSf https://github.com/clorine-software/notes/releases/download/v1.2.5/notes-installer.sh | sh
 ```
 
 Или скачайте версию из релизов
@@ -39,7 +39,7 @@ curl --proto '=https' --tlsv1.2 -LsSf https://github.com/clorine-software/notes/
 ### Windows
 
 ```powershell
-powershell -ExecutionPolicy Bypass -c "irm https://github.com/clorine-software/notes/releases/download/v1.2.4/notes-installer.ps1 | iex"
+powershell -ExecutionPolicy Bypass -c "irm https://github.com/clorine-software/notes/releases/download/v1.2.5/notes-installer.ps1 | iex"
 ```
 
 Или скачайте версию из релизов

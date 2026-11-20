@@ -67,7 +67,7 @@ async fn get_data_home() -> Result<PathBuf> {
     match env::var("XDG_DATA_HOME") {
         Ok(var) => Ok(PathBuf::from(var)),
         Err(e) => {
-            eprintln!("$XDG_DATA_HOME error: {e}, fallback to .local/share");
+            // eprintln!("$XDG_DATA_HOME error: {e}, fallback to .local/share");
             let home = env::var("HOME")?;
             Ok(PathBuf::from(home).join(".local/share"))
         }
@@ -89,7 +89,7 @@ async fn get_config_home() -> Result<PathBuf> {
     match env::var("XDG_CONFIG_HOME") {
         Ok(var) => Ok(PathBuf::from(var)),
         Err(e) => {
-            eprintln!("$XDG_CONFIG_HOME error: {e}, fallback to .config");
+            // eprintln!("$XDG_CONFIG_HOME error: {e}, fallback to .config");
             let home = env::var("HOME")?;
             Ok(PathBuf::from(home).join(".config"))
         }
